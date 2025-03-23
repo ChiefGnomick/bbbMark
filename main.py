@@ -8,7 +8,8 @@ import time
 import re
 
 class BBBBot:
-    def __init__(self, username, bbb_url, max_wait, leave_percent):
+    def __init__(self, username, bbb_url, max_wait, leave_percent, 
+                 greeting_msg, farewell_msg, send_greeting, send_farewell):
         self.driver = webdriver.Chrome()
         self.username = username
         self.bbb_url = bbb_url
@@ -18,6 +19,10 @@ class BBBBot:
         self.MAX_WAIT = max_wait
         self.LEAVE_PERCENT = leave_percent
         self.CHECK_INTERVAL = 10
+        self.greeting_msg = greeting_msg
+        self.farewell_msg = farewell_msg
+        self.send_greeting = send_greeting
+        self.send_farewell = send_farewell
 
     def login(self):
         self.driver.get(self.bbb_url)
@@ -39,6 +44,9 @@ class BBBBot:
             pass
 
     def send_message(self, message):
+        if not message:
+            return
+            
         try:
             chat_input = WebDriverWait(self.driver, 30).until(
                 EC.presence_of_element_located((By.ID, 'message-input')))
@@ -86,7 +94,8 @@ class BBBBot:
 
     def exit_procedure(self):
         self.exit_flag = True
-        self.send_message("До свидания")
+        if self.send_farewell:
+            self.send_message(self.farewell_msg)
         time.sleep(3)
         self.driver.quit()
 
@@ -94,7 +103,8 @@ class BBBBot:
         try:
             self.login()
             time.sleep(15)
-            self.send_message("Здравствуйте")
+            if self.send_greeting:
+                self.send_message(self.greeting_msg)
             thread = threading.Thread(target=self.check_conditions)
             thread.start()
             thread.join()
@@ -125,6 +135,24 @@ if __name__ == "__main__":
         except:
             pass
 
-    bot = BBBBot(username=username, bbb_url=bbb_url, 
-                max_wait=max_wait, leave_percent=leave_percent)
+    send_greeting = input("Отправлять приветствие? (y/n): ").lower() == 'y'
+    greeting_msg = ""
+    if send_greeting:
+        greeting_msg = input("Введите приветственное сообщение: ").strip()
+
+    send_farewell = input("Отправлять прощальное сообщение? (y/n): ").lower() == 'y'
+    farewell_msg = ""
+    if send_farewell:
+        farewell_msg = input("Введите прощальное сообщение: ").strip()
+
+    bot = BBBBot(
+        username=username, 
+        bbb_url=bbb_url, 
+        max_wait=max_wait, 
+        leave_percent=leave_percent,
+        greeting_msg=greeting_msg,
+        farewell_msg=farewell_msg,
+        send_greeting=send_greeting,
+        send_farewell=send_farewell
+    )
     bot.run()
