@@ -27,18 +27,27 @@ class BBBBot:
     def login(self):
         self.driver.get(self.bbb_url)
         
+        # Поиск поля ввода по плейсхолдеру на русском или английском
         username_input = WebDriverWait(self.driver, 30).until(
-            EC.presence_of_element_located((By.ID, '_b_202-gmk-lir-5nw_join_name')))
+            EC.presence_of_element_located((By.XPATH, 
+                "//input[@placeholder='Введите ваше имя!' or @placeholder='Enter your name!']"))
+        )
         username_input.clear()
         username_input.send_keys(self.username)
 
+        # Поиск кнопки присоединения по тексту
         join_button = WebDriverWait(self.driver, 30).until(
-            EC.element_to_be_clickable((By.ID, 'room-join')))
+            EC.element_to_be_clickable((By.XPATH, 
+                "//button[contains(., 'Присоединиться') or contains(., 'Join')]"))
+        )
         join_button.click()
         
         try:
+            # Поиск кнопки "Только слушать" по тексту в дочернем элементе
             listen_button = WebDriverWait(self.driver, 15).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-test="listenOnlyBtn"]')))
+                EC.element_to_be_clickable((By.XPATH, 
+                    "//button[.//*[contains(text(), 'Только слушать') or contains(text(), 'Only Listen')]]"))
+            )
             listen_button.click()
         except TimeoutException:
             pass
@@ -48,12 +57,18 @@ class BBBBot:
             return
             
         try:
+            # Поиск поля ввода сообщения по плейсхолдеру
             chat_input = WebDriverWait(self.driver, 30).until(
-                EC.presence_of_element_located((By.ID, 'message-input')))
+                EC.presence_of_element_located((By.XPATH, 
+                    "//textarea[@placeholder='Сообщение в Общий чат' or @placeholder='Message Public Chat']"))
+            )
             chat_input.send_keys(message)
             
+            # Поиск кнопки отправки по тексту в дочернем элементе
             send_button = WebDriverWait(self.driver, 30).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[data-test="sendMessageButton"]')))
+                EC.element_to_be_clickable((By.XPATH, 
+                    "//button[.//*[contains(text(), 'Отправить сообщение') or contains(text(), 'Send message')]]"))
+            )
             send_button.click()
         except TimeoutException:
             pass
@@ -61,7 +76,9 @@ class BBBBot:
     def get_user_count(self):
         try:
             user_counter = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//h2[contains(., "Users") or contains(., "Пользователи")]')))
+                EC.presence_of_element_located((By.XPATH, 
+                    '//h2[contains(., "Users") or contains(., "Пользователи")]'))
+            )
             count_text = user_counter.text
     
             match = re.search(r'\((\d+)\)', count_text)
